@@ -13,7 +13,7 @@ export default {
                 muted: "hsl(0 0% 63.9%)",
                 border: "hsl(0 0% 14.9%)",
                 accent: {
-                    DEFAULT: "hsl(350 70% 50%)", // Sophisticated Deep Rose
+                    DEFAULT: "hsl(0 0% 100%)", // Pure White
                     subtle: "rgba(255, 255, 255, 0.05)",
                 },
                 selection: "rgba(255, 255, 255, 0.1)",

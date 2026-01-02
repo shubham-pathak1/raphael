@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import { openPath } from "@tauri-apps/plugin-opener";
 import type { SearchResult } from "../../src/extension-loader/types";
 
 interface FileInfo {
@@ -9,7 +8,7 @@ interface FileInfo {
 }
 
 export async function search(query: string): Promise<SearchResult[]> {
-    if (!query.trim()) return [];
+    if (!query.trim() || query.length < 3) return []; // Enforce limit here for safety
 
     try {
         const files = await invoke<FileInfo[]>("search_files", { query });
@@ -18,10 +17,10 @@ export async function search(query: string): Promise<SearchResult[]> {
             id: `file-${file.path}`,
             title: file.name,
             subtitle: file.path,
-            icon: file.is_dir ? "📁" : "📄",
+            icon: file.is_dir ? "📂" : "📄",
             extensionId: "file-search",
             action: async () => {
-                await openPath(file.path);
+                await invoke("open_item", { path: file.path });
             }
         }));
     } catch (error) {

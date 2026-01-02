@@ -28,7 +28,7 @@ export async function search(query: string): Promise<SearchResult[]> {
                 id: `calc-${query}`,
                 title: `${result}`,
                 subtitle: `Calculator: ${query}`,
-                icon: "🧮",
+                icon: "✨",
                 extensionId: "calculator",
                 action: async () => {
                     await writeText(String(result));

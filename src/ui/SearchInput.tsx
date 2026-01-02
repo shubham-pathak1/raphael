@@ -1,12 +1,13 @@
 import React, { useRef, useEffect } from "react";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface SearchInputProps {
     value: string;
     onChange: (value: string) => void;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
-const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
+const SearchInput: React.FC<SearchInputProps> = ({ value, onChange, onKeyDown }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -14,10 +15,8 @@ const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
     }, []);
 
     return (
-        <div className="h-14 flex items-center px-4 gap-3 border-b border-border/50 group bg-background/20 backdrop-blur-md">
-            <button className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-muted hover:text-foreground">
-                <ChevronLeft size={18} />
-            </button>
+        <div className="h-16 flex items-center px-6 gap-5 border-b border-white/[0.05] group">
+            <Search size={22} className="text-white group-focus-within:text-white transition-colors" />
 
             <div className="flex-1 flex items-center relative">
                 <input
@@ -25,16 +24,16 @@ const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
                     type="text"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    placeholder="Type to filter entries..."
-                    className="w-full bg-transparent border-none outline-none text-foreground placeholder:text-muted/50 text-base font-medium selection:bg-accent/30"
+                    onKeyDown={onKeyDown}
+                    placeholder="Search apps, files, and more..."
+                    className="w-full bg-transparent border-none outline-none text-foreground placeholder:text-muted/30 text-lg font-medium selection:bg-accent/30 tracking-tight"
                     spellCheck={false}
                     autoComplete="off"
                 />
             </div>
 
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/50 bg-white/[0.02] cursor-default hover:bg-white/5 transition-colors">
-                <span className="text-[11px] font-semibold text-muted tracking-tight">All Types</span>
-                <ChevronDown size={12} className="text-muted/50" />
+            <div className="flex items-center gap-1.5 opacity-20 group-focus-within:opacity-40 transition-opacity">
+                <kbd className="px-1.5 py-0.5 rounded border border-white/20 text-[9px] font-bold">ESC</kbd>
             </div>
         </div>
     );

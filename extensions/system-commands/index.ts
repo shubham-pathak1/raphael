@@ -7,21 +7,21 @@ export async function search(query: string): Promise<SearchResult[]> {
             id: "restart",
             title: "Restart Raphael",
             subtitle: "System Command",
-            icon: "🔄",
+            icon: "♻️",
             action: () => { window.location.reload(); }
         },
         {
             id: "quit",
             title: "Quit Raphael",
             subtitle: "System Command",
-            icon: "⏏️",
+            icon: "🚪",
             action: async () => { await getCurrentWindow().close(); }
         },
         {
             id: "dev-tools",
             title: "Open DevTools",
             subtitle: "System Command",
-            icon: "🛠️",
+            icon: "🏗️",
             action: async () => {
                 const { invoke } = await import("@tauri-apps/api/core");
                 await invoke("toggle_devtools");

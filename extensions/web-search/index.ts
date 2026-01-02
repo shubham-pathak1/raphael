@@ -9,7 +9,7 @@ export async function search(query: string): Promise<SearchResult[]> {
             id: `web-search-${query}`,
             title: `Search "${query}" on Google`,
             subtitle: "Web Search",
-            icon: "🔍",
+            icon: "🌐",
             extensionId: "web-search",
             action: async () => {
                 await openUrl(`https://www.google.com/search?q=${encodeURIComponent(query)}`);

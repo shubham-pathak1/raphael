@@ -4,42 +4,7 @@ import ResultList from "./ui/ResultList";
 import ResultPreview from "./ui/ResultPreview";
 import Footer from "./ui/Footer";
 import type { SearchResult } from "./extension-loader/types";
-import { fuzzyMatch } from "./search";
 import { extensionLoader } from "./extension-loader";
-
-import { Search, Calculator, FileText, Settings } from "lucide-react";
-
-// Placeholder results for when no extensions are loaded or responding
-const MOCK_RESULTS: SearchResult[] = [
-    {
-        id: "calc",
-        title: "Calculator",
-        subtitle: "Perform quick calculations",
-        icon: <Calculator size={18} className="text-muted" />,
-        extensionId: "calculator",
-    },
-    {
-        id: "web",
-        title: "Search Google",
-        subtitle: "Web Search",
-        icon: <Search size={18} className="text-muted" />,
-        extensionId: "web-search",
-    },
-    {
-        id: "files",
-        title: "File Search",
-        subtitle: "Find files and folders",
-        icon: <FileText size={18} className="text-muted" />,
-        extensionId: "file-search",
-    },
-    {
-        id: "system",
-        title: "System Commands",
-        subtitle: "Control your machine",
-        icon: <Settings size={18} className="text-muted" />,
-        extensionId: "system-commands",
-    },
-];
 
 function App() {
     const [query, setQuery] = useState("");
@@ -50,39 +15,41 @@ function App() {
         extensionLoader.initialize();
     }, []);
 
-    const handleQueryChange = useCallback(async (value: string) => {
-        setQuery(value);
-        setSelectedIndex(0);
-
+    const performSearch = useCallback(async (value: string) => {
         if (!value.trim()) {
             setResults([]);
             return;
         }
 
         try {
-            // Get results from loaded extensions
             const extensionResults = await extensionLoader.search(value);
-
-            if (extensionResults.length > 0) {
-                setResults(extensionResults);
-            } else {
-                // Fallback to matching MOCK_RESULTS for now
-                const filtered = MOCK_RESULTS.filter(item =>
-                    fuzzyMatch(value, item.title) > 0 || fuzzyMatch(value, item.subtitle || "") > 0
-                ).sort((a, b) => {
-                    const scoreA = Math.max(fuzzyMatch(value, a.title), fuzzyMatch(value, a.subtitle || "") * 0.8);
-                    const scoreB = Math.max(fuzzyMatch(value, b.title), fuzzyMatch(value, b.subtitle || "") * 0.8);
-                    return scoreB - scoreA;
-                });
-                setResults(filtered);
-            }
+            setResults(extensionResults);
         } catch (error) {
             console.error("Search failed:", error);
         }
     }, []);
 
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (query) {
+                performSearch(query);
+            }
+        }, 200); // Snappy 200ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [query, performSearch]);
+
+    const handleQueryChange = useCallback((value: string) => {
+        setQuery(value);
+        setSelectedIndex(0);
+        if (!value.trim()) {
+            setResults([]);
+        }
+    }, []);
+
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
+            e.stopPropagation();
             switch (e.key) {
                 case "ArrowDown":
                     e.preventDefault();
@@ -93,9 +60,28 @@ function App() {
                     setSelectedIndex((prev) => Math.max(prev - 1, 0));
                     break;
                 case "Enter":
+                    e.preventDefault();
+                    console.log("[App] Enter pressed. Index:", selectedIndex);
                     const selected = results[selectedIndex];
-                    if (selected && selected.action) {
-                        selected.action();
+                    console.log("[App] Selected Item:", selected);
+
+                    if (selected) {
+                        if (selected.action) {
+                            console.log("[App] Executing action for:", selected.id);
+                            try {
+                                const actionResult = selected.action();
+                                if (actionResult instanceof Promise) {
+                                    actionResult.then(() => console.log("[App] Action promise resolved"))
+                                        .catch(err => console.error("[App] Action promise failed:", err));
+                                }
+                            } catch (err) {
+                                console.error("[App] Action execution failed synchronously:", err);
+                            }
+                        } else {
+                            console.warn("[App] Item has no action defined");
+                        }
+                    } else {
+                        console.warn("[App] No item selected at index", selectedIndex);
                     }
                     break;
                 case "Escape":
@@ -120,16 +106,15 @@ function App() {
 
     return (
         <div
-            className="h-full w-full glass rounded-2xl overflow-hidden flex flex-col shadow-premium border border-white/5"
-            onKeyDown={handleKeyDown}
+            className="h-full w-full glass rounded-2xl overflow-hidden flex flex-col shadow-premium border border-white/5 animate-scale-in"
         >
-            <SearchInput value={query} onChange={handleQueryChange} />
+            <SearchInput value={query} onChange={handleQueryChange} onKeyDown={handleKeyDown} />
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Result List Column */}
-                <div className="w-[320px] h-full border-r border-border/40 overflow-hidden flex flex-col pt-3 bg-background-subtle/20">
-                    <div className="px-4 mb-2">
-                        <span className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] opacity-50">Today</span>
+                <div className="w-[260px] h-full border-r border-white/[0.05] overflow-hidden flex flex-col pt-4">
+                    <div className="px-6 mb-2">
+                        <span className="text-[10px] font-bold text-muted/30 uppercase tracking-[0.2em]">Suggestions</span>
                     </div>
                     <div className="flex-1 overflow-y-auto">
                         {results.length > 0 ? (
@@ -143,16 +128,16 @@ function App() {
                                 <p className="text-xs font-medium">No results found</p>
                             </div>
                         ) : (
-                            <div className="h-40 flex flex-col items-center justify-center text-muted/20 p-8 space-y-2">
-                                <div className="w-10 h-1bg-muted/10 rounded" />
-                                <div className="w-8 h-1 bg-muted/10 rounded" />
+                            <div className="h-40 flex flex-col items-center justify-center text-muted/5 p-8 space-y-2">
+                                <div className="w-12 h-1.5 bg-current rounded-full" />
+                                <div className="w-8 h-1.5 bg-current rounded-full" />
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Preview Column */}
-                <div className="flex-1 h-full bg-background/10">
+                <div className="flex-1 h-full bg-white/[0.01]">
                     <ResultPreview result={selectedResult} />
                 </div>
             </div>

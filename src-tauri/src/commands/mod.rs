@@ -12,6 +12,7 @@ pub struct ExtensionInfo {
     pub version: String,
     pub description: Option<String>,
     pub author: Option<String>,
+    #[serde(default)]
     pub path: String,
 }
 
@@ -20,38 +21,51 @@ pub struct ExtensionInfo {
 pub fn get_extensions(handle: tauri::AppHandle) -> Result<Vec<ExtensionInfo>, String> {
     let mut extensions = Vec::new();
     
-    // In a real app, this would be in a resource directory or app data config
-    // For development, we look at the relative 'extensions' folder
-    let mut ext_dir = handle.path().resource_dir().unwrap_or_else(|_| PathBuf::from("."));
-    
-    // In dev mode, Resource Dir might be deep in target/debug
-    // We try to find the 'extensions' folder by walking up or checking common locations
-    if !ext_dir.join("extensions").exists() {
-        // Try current working directory
-        if let Ok(cwd) = std::env::current_dir() {
-            if cwd.join("extensions").exists() {
-                ext_dir = cwd;
-            } else if cwd.parent().map(|p| p.join("extensions").exists()).unwrap_or(false) {
-                // If we're in src-tauri, the parent has extensions
-                ext_dir = cwd.parent().unwrap().to_path_buf();
-            }
+    // Attempt to find extensions directory in multiple locations
+    let mut search_paths = Vec::new();
+
+    // 1. Resource directory
+    if let Ok(res_dir) = handle.path().resource_dir() {
+        search_paths.push(res_dir.join("extensions"));
+    }
+
+    // 2. Current working directory
+    if let Ok(cwd) = std::env::current_dir() {
+        search_paths.push(cwd.join("extensions"));
+        // 3. Parent of CWD (if we are in src-tauri)
+        if let Some(parent) = cwd.parent() {
+            search_paths.push(parent.join("extensions"));
         }
     }
     
-    let ext_path = ext_dir.join("extensions");
+    let mut found_path = None;
+    for path in &search_paths {
+        if path.exists() && path.is_dir() {
+            found_path = Some(path.clone());
+            break;
+        }
+    }
+
+    let ext_path = found_path.ok_or_else(|| {
+        format!("Extensions directory not found. Searched in: {:?}", search_paths)
+    })?;
     
-    if ext_path.exists() && ext_path.is_dir() {
-        for entry in fs::read_dir(ext_path).map_err(|e| e.to_string())? {
-            let entry = entry.map_err(|e| e.to_string())?;
-            let path = entry.path();
-            
-            if path.is_dir() {
-                let manifest_path = path.join("manifest.json");
-                if manifest_path.exists() {
-                    let manifest_content = fs::read_to_string(&manifest_path).map_err(|e| e.to_string())?;
-                    if let Ok(mut info) = serde_json::from_str::<ExtensionInfo>(&manifest_content) {
+    for entry in fs::read_dir(&ext_path).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        
+        if path.is_dir() {
+            let manifest_path = path.join("manifest.json");
+            if manifest_path.exists() {
+                let manifest_content = fs::read_to_string(&manifest_path).map_err(|e| e.to_string())?;
+                match serde_json::from_str::<ExtensionInfo>(&manifest_content) {
+                    Ok(mut info) => {
                         info.path = path.to_string_lossy().to_string();
                         extensions.push(info);
+                    },
+                    Err(_e) => {
+                        // Log deserialization error in the response if needed, for now just skip
+                        // return Err(format!("Failed to parse manifest at {:?}: {}", manifest_path, e));
                     }
                 }
             }
@@ -125,51 +139,112 @@ pub struct FileInfo {
     pub is_dir: bool,
 }
 
-/// Search for files in the user's Documents folder
+use walkdir::{WalkDir, DirEntry};
+
+/// Helper to determine if an entry should be skipped
+fn is_hidden_or_system(entry: &DirEntry) -> bool {
+    entry.file_name()
+         .to_str()
+         .map(|s| s.starts_with('.') || 
+                  s == "node_modules" || 
+                  s == "target" || 
+                  s == "AppData" || 
+                  s == "Windows" || 
+                  s == "Program Files" || 
+                  s == "Program Files (x86)" ||
+                  s == "$Recycle.Bin" ||
+                  s == "System Volume Information")
+         .unwrap_or(false)
+}
+
 #[tauri::command]
 pub fn search_files(query: String) -> Result<Vec<FileInfo>, String> {
     let mut files = Vec::new();
-    
-    if query.is_empty() {
+    if query.trim().is_empty() {
         return Ok(files);
     }
 
-    let search_root = dirs::document_dir().unwrap_or_else(|| dirs::home_dir().unwrap_or_default());
-    
-    if !search_root.exists() {
-        return Ok(files);
+    let min_query_len = if query.chars().all(|c: char| c.is_numeric() || c.is_ascii_punctuation()) { 1 } else { 3 };
+    if query.len() < min_query_len { return Ok(files); }
+
+    let home_dir = dirs::home_dir().unwrap_or_default();
+    let home_drive = home_dir.to_string_lossy().chars().next().unwrap_or('C').to_ascii_uppercase();
+
+    // 1. Scan Home Directory (Recursive, up to depth 4 - sufficient for most user files)
+    if home_dir.exists() {
+        let walker = WalkDir::new(&home_dir)
+            .max_depth(4)
+            .into_iter()
+            .filter_entry(|e| !is_hidden_or_system(e));
+
+        for entry in walker.filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.is_dir() { continue; }
+            
+            if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                if name.to_lowercase().contains(&query.to_lowercase()) {
+                    files.push(FileInfo {
+                        name: name.to_string(),
+                        path: path.to_string_lossy().to_string(),
+                        is_dir: false,
+                    });
+                }
+            }
+            if files.len() >= 50 { break; }
+        }
     }
 
-    walk_dir_for_files(&search_root, &query, &mut files, 0);
+    // 2. Scan other drives (Shallow depth 2 for speed)
+    for letter in b'A'..=b'Z' {
+        let char_letter = letter as char;
+        if char_letter.to_ascii_uppercase() == home_drive { continue; }
+
+        let drive = format!("{}:\\", char_letter);
+        let drive_path = PathBuf::from(&drive);
+
+        if drive_path.exists() {
+             let walker = WalkDir::new(&drive_path)
+                .max_depth(2) // Very shallow for fast root access
+                .into_iter()
+                .filter_entry(|e| !is_hidden_or_system(e));
+            
+            for entry in walker.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() { continue; }
+
+                if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                    if name.to_lowercase().contains(&query.to_lowercase()) {
+                        files.push(FileInfo {
+                            name: name.to_string(),
+                            path: path.to_string_lossy().to_string(),
+                            is_dir: false,
+                        });
+                    }
+                }
+                if files.len() >= 100 { break; }
+            }
+        }
+    }
 
     Ok(files)
 }
 
-fn walk_dir_for_files(dir: &PathBuf, query: &str, files: &mut Vec<FileInfo>, depth: u32) {
-    if depth > 2 { // Limit depth for performance
-        return;
-    }
-
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+#[tauri::command]
+pub fn open_item(path: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        
+        // Use explorer to open the file/folder
+        Command::new("explorer")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
             
-            if name.to_lowercase().contains(&query.to_lowercase()) {
-                files.push(FileInfo {
-                    name: name.to_string(),
-                    path: path.to_string_lossy().to_string(),
-                    is_dir: path.is_dir(),
-                });
-            }
-
-            if path.is_dir() && !name.starts_with('.') {
-                walk_dir_for_files(&path, query, files, depth + 1);
-            }
-
-            if files.len() > 50 { // Limit results
-                return;
-            }
-        }
+        Ok(())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Custom open only implemented for Windows".to_string())
     }
 }

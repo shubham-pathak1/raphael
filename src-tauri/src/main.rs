@@ -32,7 +32,13 @@ fn main() {
         .setup(|app| {
             use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, GlobalShortcutExt};
             let toggle_shortcut = Shortcut::new(Some(Modifiers::ALT), Code::Space);
-            app.global_shortcut().register(toggle_shortcut)?;
+            
+            // Safety: Unregister all first to clear zombie states
+            let _ = app.global_shortcut().unregister_all();
+            
+            if let Err(e) = app.global_shortcut().register(toggle_shortcut) {
+                eprintln!("Warning: Failed to register global shortcut (Alt+Space): {}", e);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -40,6 +46,7 @@ fn main() {
             commands::get_apps,
             commands::search_files,
             commands::toggle_devtools,
+            commands::open_item,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

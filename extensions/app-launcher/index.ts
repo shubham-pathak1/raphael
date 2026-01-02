@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import { openPath } from "@tauri-apps/plugin-opener";
 import type { SearchResult } from "../../src/extension-loader/types";
 
 interface AppInfo {
@@ -20,10 +19,10 @@ export async function search(query: string): Promise<SearchResult[]> {
                 id: `app-${app.name}-${app.path}`,
                 title: app.name,
                 subtitle: "Application",
-                icon: "🚀",
+                icon: "💻",
                 extensionId: "app-launcher",
                 action: async () => {
-                    await openPath(app.path);
+                    await invoke("open_item", { path: app.path });
                 }
             }));
     } catch (error) {

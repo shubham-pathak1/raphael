@@ -22,6 +22,7 @@ class ExtensionLoader {
     async initialize(): Promise<void> {
         try {
             const discoveredExtensions = await invoke<ExtensionInfo[]>("get_extensions");
+            console.log("Discovered extensions:", discoveredExtensions);
 
             for (const info of discoveredExtensions) {
                 const manifest: ExtensionManifest = {
