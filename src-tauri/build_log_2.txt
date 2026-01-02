@@ -1,0 +1,24 @@
+    Checking tauri-runtime v2.9.2
+    Checking wry v0.53.5
+   Compiling raphael v0.1.0 (D:\projects\raphael\src-tauri)
+error: failed to run custom build command for `raphael v0.1.0 (D:\projects\raphael\src-tauri)`
+
+Caused by:
+  process didn't exit successfully: `D:\projects\raphael\src-tauri\target\debug\build\raphael-1326a237084ff657\build-script-build` (exit code: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=TAURI_CONFIG
+  cargo:rustc-check-cfg=cfg(desktop)
+  cargo:rustc-cfg=desktop
+  cargo:rustc-check-cfg=cfg(mobile)
+  cargo:rerun-if-changed=D:\projects\raphael\src-tauri\tauri.conf.json
+  cargo:rustc-env=TAURI_ANDROID_PACKAGE_NAME_APP_NAME=app
+  cargo:rustc-env=TAURI_ANDROID_PACKAGE_NAME_PREFIX=com_raphael
+  cargo:rustc-check-cfg=cfg(dev)
+  cargo:rustc-cfg=dev
+  cargo:PERMISSION_FILES_PATH=D:\projects\raphael\src-tauri\target\debug\build\raphael-96915ccbf66a24c7\out\app-manifest\__app__-permission-files
+  cargo:rerun-if-changed=capabilities
+  cargo:rerun-if-env-changed=REMOVE_UNUSED_COMMANDS
+  cargo:rustc-env=TAURI_ENV_TARGET_TRIPLE=x86_64-pc-windows-msvc
+  package.metadata does not exist
+  `icons/icon.ico` not found; required for generating a Windows Resource file during tauri-build
+warning: build failed, waiting for other jobs to finish...

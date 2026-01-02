@@ -1,0 +1,11 @@
+{
+    "id": "web-search",
+    "name": "Web Search",
+    "version": "0.1.0",
+    "description": "Search the web with multiple engines",
+    "permissions": [
+        "http",
+        "shell:open"
+    ],
+    "main": "index.ts"
+}

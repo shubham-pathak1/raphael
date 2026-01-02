@@ -1,0 +1,18 @@
+.DS_Store
+node_modules/
+dist/
+target/
+*.log
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Tauri
+src-tauri/target/
+
+# env
+.env
+.env.*

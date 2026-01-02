@@ -1,0 +1,11 @@
+{
+    "id": "system-commands",
+    "name": "System Commands",
+    "version": "0.1.0",
+    "description": "Lock, sleep, shutdown and other system operations",
+    "permissions": [
+        "shell:execute",
+        "system:info"
+    ],
+    "main": "index.ts"
+}

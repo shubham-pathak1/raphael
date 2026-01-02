@@ -1,0 +1,20 @@
+    Checking raphael v0.1.0 (D:\projects\raphael\src-tauri)
+error[E0599]: no method named `get_webview_window` found for reference `&AppHandle<_>` in the current scope
+   --> src\main.rs:19:46
+    |
+ 19 | ...                   let window = app.get_webview_window("main").unwrap();
+    |                                        ^^^^^^^^^^^^^^^^^^
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: there is a method `webview_windows` with a similar name, but with different arguments
+   --> C:\Users\shubh\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-2.9.5\src\lib.rs:594:3
+    |
+594 |   fn webview_windows(&self) -> HashMap<String, WebviewWindow<R>> {
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: trait `Manager` which provides `get_webview_window` is implemented but not in scope; perhaps you want to import it
+    |
+  3 + use tauri::Manager;
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `raphael` (bin "raphael") due to 1 previous error

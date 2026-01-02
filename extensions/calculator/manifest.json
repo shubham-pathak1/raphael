@@ -1,0 +1,8 @@
+{
+    "id": "calculator",
+    "name": "Calculator",
+    "version": "0.1.0",
+    "description": "Perform quick calculations inline",
+    "permissions": [],
+    "main": "index.ts"
+}

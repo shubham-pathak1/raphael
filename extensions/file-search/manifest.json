@@ -1,0 +1,10 @@
+{
+    "id": "file-search",
+    "name": "File Search",
+    "version": "0.1.0",
+    "description": "Find files and folders across the system",
+    "permissions": [
+        "fs:read"
+    ],
+    "main": "index.ts"
+}

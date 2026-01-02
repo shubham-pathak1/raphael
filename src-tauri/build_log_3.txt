@@ -1,0 +1,28 @@
+    Checking tauri-runtime-wry v2.9.3
+   Compiling raphael v0.1.0 (D:\projects\raphael\src-tauri)
+    Checking tauri v2.9.5
+    Checking tauri-plugin-shell v2.3.3
+warning: struct `ExtensionRuntime` is never constructed
+ --> src\extensions\mod.rs:4:12
+  |
+4 | pub struct ExtensionRuntime {
+  |            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+ --> src\extensions\mod.rs:9:12
+  |
+8 | impl ExtensionRuntime {
+  | --------------------- associated function in this implementation
+9 |     pub fn new() -> Self {
+  |            ^^^
+
+warning: function `get_platform` is never used
+  --> src\platform\mod.rs:14:8
+   |
+14 | pub fn get_platform() -> &'static str {
+   |        ^^^^^^^^^^^^
+
+warning: `raphael` (bin "raphael") generated 3 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.33s
