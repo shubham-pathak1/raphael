@@ -11,6 +11,7 @@ pub mod macos;
 pub mod linux;
 
 /// Get the current platform name
+#[allow(dead_code)]
 pub fn get_platform() -> &'static str {
     #[cfg(target_os = "windows")]
     return "windows";

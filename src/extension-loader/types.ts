@@ -1,13 +1,11 @@
-/**
- * Extension System Type Definitions
- */
+import React from "react";
 
 /** Result item returned by extensions */
 export interface SearchResult {
     id: string;
     title: string;
     subtitle?: string;
-    icon?: string;
+    icon?: React.ReactNode | string;
     extensionId: string;
     action?: () => void | Promise<void>;
     metadata?: Record<string, unknown>;

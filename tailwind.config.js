@@ -5,24 +5,26 @@ export default {
     theme: {
         extend: {
             colors: {
+                background: {
+                    DEFAULT: "hsl(0 0% 4.7%)",
+                    subtle: "hsl(0 0% 8%)",
+                },
+                foreground: "hsl(0 0% 98%)",
+                muted: "hsl(0 0% 63.9%)",
+                border: "hsl(0 0% 14.9%)",
+                accent: {
+                    DEFAULT: "hsl(350 70% 50%)", // Sophisticated Deep Rose
+                    subtle: "rgba(255, 255, 255, 0.05)",
+                },
+                selection: "rgba(255, 255, 255, 0.1)",
                 surface: {
                     DEFAULT: "hsl(0 0% 7%)",
                     elevated: "hsl(0 0% 10%)",
-                    hover: "hsl(0 0% 13%)",
                 },
-                accent: {
-                    DEFAULT: "hsl(220 90% 56%)",
-                    hover: "hsl(220 90% 62%)",
-                },
-                text: {
-                    primary: "hsl(0 0% 98%)",
-                    secondary: "hsl(0 0% 65%)",
-                    muted: "hsl(0 0% 45%)",
-                },
-                border: {
-                    DEFAULT: "hsl(0 0% 18%)",
-                    subtle: "hsl(0 0% 12%)",
-                },
+            },
+            borderRadius: {
+                xl: "12px",
+                "2xl": "16px",
             },
             fontFamily: {
                 sans: ["Inter", "system-ui", "sans-serif"],
@@ -43,11 +45,7 @@ export default {
                 },
             },
             boxShadow: {
-                glass: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
-                premium: "0 10px 40px -10px rgba(0, 0, 0, 0.5)",
-            },
-            backdropBlur: {
-                xs: "2px",
+                premium: "0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)",
             },
         },
     },

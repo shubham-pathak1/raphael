@@ -14,25 +14,44 @@ html,
 body,
 #root {
   height: 100%;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: transparent;
   color: hsl(0 0% 98%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
 }
 
-/* Disable text selection for launcher feel */
-body {
-  user-select: none;
-  -webkit-user-select: none;
+/* Background Glow Effect */
+body::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 99, 99, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(255, 99, 99, 0.05) 0%, transparent 40%);
+  filter: blur(80px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Glassmorphism utility */
 .glass {
-  background: rgba(18, 18, 18, 0.7);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 10, 0.65);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 /* Custom scrollbar */

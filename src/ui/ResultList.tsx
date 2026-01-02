@@ -1,3 +1,4 @@
+import React from "react";
 import type { SearchResult } from "../extension-loader/types";
 import ResultItem from "./ResultItem";
 
@@ -7,21 +8,23 @@ interface ResultListProps {
     onSelect: (index: number) => void;
 }
 
-export default function ResultList({
+const ResultList: React.FC<ResultListProps> = ({
     results,
     selectedIndex,
     onSelect,
-}: ResultListProps) {
+}) => {
     return (
-        <div className="flex-1 overflow-y-auto p-4 space-y-1">
+        <div className="flex-1 overflow-y-auto px-2 space-y-0.5 pb-4">
             {results.map((result, index) => (
                 <ResultItem
                     key={result.id}
                     result={result}
-                    isSelected={index === selectedIndex}
+                    selected={index === selectedIndex}
                     onClick={() => onSelect(index)}
                 />
             ))}
         </div>
     );
-}
+};
+
+export default ResultList;

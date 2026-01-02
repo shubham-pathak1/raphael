@@ -52,6 +52,14 @@ class ExtensionLoader {
                                 const { search } = await import("../../extensions/system-commands/index");
                                 return search(query);
                             }
+                            if (info.id === "app-launcher") {
+                                const { search } = await import("../../extensions/app-launcher/index");
+                                return search(query);
+                            }
+                            if (info.id === "file-search") {
+                                const { search } = await import("../../extensions/file-search/index");
+                                return search(query);
+                            }
                         } catch (e) {
                             console.error(`Failed to load extension ${info.id}:`, e);
                         }

@@ -1,9 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
 import SearchInput from "./ui/SearchInput";
 import ResultList from "./ui/ResultList";
+import ResultPreview from "./ui/ResultPreview";
+import Footer from "./ui/Footer";
 import type { SearchResult } from "./extension-loader/types";
 import { fuzzyMatch } from "./search";
 import { extensionLoader } from "./extension-loader";
+
+import { Search, Calculator, FileText, Settings } from "lucide-react";
 
 // Placeholder results for when no extensions are loaded or responding
 const MOCK_RESULTS: SearchResult[] = [
@@ -11,28 +15,28 @@ const MOCK_RESULTS: SearchResult[] = [
         id: "calc",
         title: "Calculator",
         subtitle: "Perform quick calculations",
-        icon: "🧮",
+        icon: <Calculator size={18} className="text-muted" />,
         extensionId: "calculator",
     },
     {
         id: "web",
         title: "Search Google",
         subtitle: "Web Search",
-        icon: "🔍",
+        icon: <Search size={18} className="text-muted" />,
         extensionId: "web-search",
     },
     {
         id: "files",
         title: "File Search",
         subtitle: "Find files and folders",
-        icon: "📁",
+        icon: <FileText size={18} className="text-muted" />,
         extensionId: "file-search",
     },
     {
         id: "system",
         title: "System Commands",
         subtitle: "Control your machine",
-        icon: "⚙️",
+        icon: <Settings size={18} className="text-muted" />,
         extensionId: "system-commands",
     },
 ];
@@ -89,8 +93,9 @@ function App() {
                     setSelectedIndex((prev) => Math.max(prev - 1, 0));
                     break;
                 case "Enter":
-                    if (results[selectedIndex]) {
-                        console.log("Execute:", results[selectedIndex]);
+                    const selected = results[selectedIndex];
+                    if (selected && selected.action) {
+                        selected.action();
                     }
                     break;
                 case "Escape":
@@ -104,35 +109,55 @@ function App() {
 
     const handleResultClick = useCallback((index: number) => {
         setSelectedIndex(index);
-        console.log("Execute:", results[index]);
+        const selected = results[index];
+        if (selected && selected.action) {
+            selected.action();
+        }
     }, [results]);
+
+    const selectedResult = results[selectedIndex] || null;
+    const footerTitle = selectedResult ? selectedResult.extensionId.replace("-", " ") : "Raphael";
 
     return (
         <div
-            className="h-full w-full glass rounded-xl overflow-hidden flex flex-col shadow-premium"
+            className="h-full w-full glass rounded-2xl overflow-hidden flex flex-col shadow-premium border border-white/5"
             onKeyDown={handleKeyDown}
         >
             <SearchInput value={query} onChange={handleQueryChange} />
-            <div className="flex-1 overflow-hidden">
-                {results.length > 0 ? (
-                    <ResultList
-                        results={results}
-                        selectedIndex={selectedIndex}
-                        onSelect={handleResultClick}
-                    />
-                ) : query.trim() ? (
-                    <div className="h-full flex flex-col items-center justify-center text-text-muted animate-fade-in p-8">
-                        <div className="text-4xl mb-4">💨</div>
-                        <p className="text-sm font-medium">No results found for "{query}"</p>
-                        <p className="text-xs mt-1">Try a different search term</p>
+
+            <div className="flex-1 flex overflow-hidden">
+                {/* Result List Column */}
+                <div className="w-[320px] h-full border-r border-border/40 overflow-hidden flex flex-col pt-3 bg-background-subtle/20">
+                    <div className="px-4 mb-2">
+                        <span className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] opacity-50">Today</span>
                     </div>
-                ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-text-muted animate-fade-in p-8 opacity-40">
-                        <div className="text-2xl mb-2 italic">Raphael</div>
-                        <p className="text-xs">Your personal system companion</p>
+                    <div className="flex-1 overflow-y-auto">
+                        {results.length > 0 ? (
+                            <ResultList
+                                results={results}
+                                selectedIndex={selectedIndex}
+                                onSelect={handleResultClick}
+                            />
+                        ) : query.trim() ? (
+                            <div className="h-40 flex flex-col items-center justify-center text-muted/40 p-8">
+                                <p className="text-xs font-medium">No results found</p>
+                            </div>
+                        ) : (
+                            <div className="h-40 flex flex-col items-center justify-center text-muted/20 p-8 space-y-2">
+                                <div className="w-10 h-1bg-muted/10 rounded" />
+                                <div className="w-8 h-1 bg-muted/10 rounded" />
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
+
+                {/* Preview Column */}
+                <div className="flex-1 h-full bg-background/10">
+                    <ResultPreview result={selectedResult} />
+                </div>
             </div>
+
+            <Footer title={footerTitle} />
         </div>
     );
 }

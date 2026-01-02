@@ -1,11 +1,12 @@
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
 
 interface SearchInputProps {
     value: string;
     onChange: (value: string) => void;
 }
 
-export default function SearchInput({ value, onChange }: SearchInputProps) {
+const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -13,38 +14,30 @@ export default function SearchInput({ value, onChange }: SearchInputProps) {
     }, []);
 
     return (
-        <div className="p-5 border-b border-white/5 bg-white/[0.02]">
-            <div className="flex items-center gap-4">
-                <svg
-                    className="w-5 h-5 text-accent flex-shrink-0 opacity-80"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                </svg>
+        <div className="h-14 flex items-center px-4 gap-3 border-b border-border/50 group bg-background/20 backdrop-blur-md">
+            <button className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-muted hover:text-foreground">
+                <ChevronLeft size={18} />
+            </button>
+
+            <div className="flex-1 flex items-center relative">
                 <input
                     ref={inputRef}
                     type="text"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    placeholder="What are we doing today?"
-                    className="flex-1 bg-transparent text-text-primary text-lg placeholder:text-text-muted outline-none font-medium"
-                    autoFocus
+                    placeholder="Type to filter entries..."
+                    className="w-full bg-transparent border-none outline-none text-foreground placeholder:text-muted/50 text-base font-medium selection:bg-accent/30"
+                    spellCheck={false}
+                    autoComplete="off"
                 />
-                {value && (
-                    <div className="flex items-center gap-2 animate-fade-in">
-                        <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold px-1.5 py-0.5 bg-white/5 rounded">
-                            ESC
-                        </span>
-                    </div>
-                )}
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/50 bg-white/[0.02] cursor-default hover:bg-white/5 transition-colors">
+                <span className="text-[11px] font-semibold text-muted tracking-tight">All Types</span>
+                <ChevronDown size={12} className="text-muted/50" />
             </div>
         </div>
     );
-}
+};
+
+export default SearchInput;

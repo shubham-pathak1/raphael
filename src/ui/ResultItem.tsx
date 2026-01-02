@@ -1,55 +1,47 @@
+import React from "react";
 import type { SearchResult } from "../extension-loader/types";
+
 
 interface ResultItemProps {
     result: SearchResult;
-    isSelected: boolean;
+    selected: boolean;
     onClick: () => void;
 }
 
-export default function ResultItem({
-    result,
-    isSelected,
-    onClick,
-}: ResultItemProps) {
+
+
+const ResultItem: React.FC<ResultItemProps> = ({ result, selected, onClick }) => {
     return (
         <div
             onClick={onClick}
             className={`
-        flex items-center gap-4 px-4 py-3.5 rounded-xl cursor-pointer
-        transition-all duration-200 group
-        ${isSelected
-                    ? "bg-white/10 shadow-lg translate-x-1"
-                    : "hover:bg-white/5 hover:translate-x-0.5"}
+        group flex items-center px-3 py-2.5 gap-3 rounded-lg cursor-default transition-all duration-100 mx-1
+        ${selected ? "bg-white/[0.08] shadow-sm" : "hover:bg-white/[0.03]"}
       `}
         >
             <div className={`
-        text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg
-        ${isSelected ? "bg-accent/20 text-accent" : "bg-white/5 text-text-secondary"}
-        transition-colors duration-200
+        w-8 h-8 rounded-lg flex items-center justify-center transition-colors glass-subtle
+        ${selected ? "text-foreground bg-white/5 border-white/10" : "text-muted group-hover:text-foreground/80"}
       `}>
                 {result.icon}
             </div>
+
             <div className="flex-1 min-w-0">
                 <div className={`
-          text-sm font-semibold truncate transition-colors duration-200
-          ${isSelected ? "text-text-primary" : "text-text-secondary"}
+            text-sm font-medium truncate tracking-tight
+            ${selected ? "text-foreground" : "text-muted group-hover:text-foreground/90"}
         `}>
                     {result.title}
                 </div>
-                {result.subtitle && (
-                    <div className={`
-            text-xs truncate opacity-60 mt-0.5
-            ${isSelected ? "text-text-primary" : "text-text-muted"}
-          `}>
-                        {result.subtitle}
-                    </div>
-                )}
             </div>
-            {isSelected && (
-                <span className="text-[10px] font-bold text-accent px-2 py-1 bg-accent/10 rounded-md animate-fade-in">
-                    ENTER
-                </span>
+
+            {selected && (
+                <div className="text-[9px] font-bold text-muted/40 uppercase tracking-[0.2em] px-1 animate-fade-in translate-y-[1px]">
+                    Select
+                </div>
             )}
         </div>
     );
-}
+};
+
+export default ResultItem;

@@ -60,3 +60,116 @@ pub fn get_extensions(handle: tauri::AppHandle) -> Result<Vec<ExtensionInfo>, St
     
     Ok(extensions)
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AppInfo {
+    pub name: String,
+    pub path: String,
+    pub icon: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_apps() -> Vec<AppInfo> {
+    scan_start_menu()
+}
+
+#[tauri::command]
+pub fn toggle_devtools(window: tauri::WebviewWindow) {
+    window.open_devtools();
+}
+
+#[cfg(target_os = "windows")]
+fn scan_start_menu() -> Vec<AppInfo> {
+    let mut apps = Vec::new();
+    let start_menu_paths = vec![
+        PathBuf::from("C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs"),
+        dirs::home_dir().map(|h| h.join("AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs")).unwrap_or_default(),
+    ];
+
+    for path in start_menu_paths {
+        if path.exists() {
+            scan_dir_for_apps(&path, &mut apps);
+        }
+    }
+    apps
+}
+
+#[cfg(not(target_os = "windows"))]
+fn scan_start_menu() -> Vec<AppInfo> {
+    Vec::new()
+}
+
+#[cfg(target_os = "windows")]
+fn scan_dir_for_apps(dir: &PathBuf, apps: &mut Vec<AppInfo>) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                scan_dir_for_apps(&path, apps);
+            } else if path.extension().and_then(|s| s.to_str()) == Some("lnk") {
+                let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("Unknown").to_string();
+                apps.push(AppInfo {
+                    name,
+                    path: path.to_string_lossy().to_string(),
+                    icon: None,
+                });
+            }
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FileInfo {
+    pub name: String,
+    pub path: String,
+    pub is_dir: bool,
+}
+
+/// Search for files in the user's Documents folder
+#[tauri::command]
+pub fn search_files(query: String) -> Result<Vec<FileInfo>, String> {
+    let mut files = Vec::new();
+    
+    if query.is_empty() {
+        return Ok(files);
+    }
+
+    let search_root = dirs::document_dir().unwrap_or_else(|| dirs::home_dir().unwrap_or_default());
+    
+    if !search_root.exists() {
+        return Ok(files);
+    }
+
+    walk_dir_for_files(&search_root, &query, &mut files, 0);
+
+    Ok(files)
+}
+
+fn walk_dir_for_files(dir: &PathBuf, query: &str, files: &mut Vec<FileInfo>, depth: u32) {
+    if depth > 2 { // Limit depth for performance
+        return;
+    }
+
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+            
+            if name.to_lowercase().contains(&query.to_lowercase()) {
+                files.push(FileInfo {
+                    name: name.to_string(),
+                    path: path.to_string_lossy().to_string(),
+                    is_dir: path.is_dir(),
+                });
+            }
+
+            if path.is_dir() && !name.starts_with('.') {
+                walk_dir_for_files(&path, query, files, depth + 1);
+            }
+
+            if files.len() > 50 { // Limit results
+                return;
+            }
+        }
+    }
+}

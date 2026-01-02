@@ -1,0 +1,21 @@
+    Checking raphael v0.1.0 (D:\projects\raphael\src-tauri)
+error[E0599]: no method named `is_devtools_open` found for struct `tauri::Window<R>` in the current scope
+  --> src\commands\mod.rs:78:15
+   |
+78 |     if window.is_devtools_open() {
+   |               ^^^^^^^^^^^^^^^^ method not found in `tauri::Window`
+
+error[E0599]: no method named `close_devtools` found for struct `tauri::Window<R>` in the current scope
+  --> src\commands\mod.rs:79:16
+   |
+79 |         window.close_devtools();
+   |                ^^^^^^^^^^^^^^ method not found in `tauri::Window`
+
+error[E0599]: no method named `open_devtools` found for struct `tauri::Window<R>` in the current scope
+  --> src\commands\mod.rs:81:16
+   |
+81 |         window.open_devtools();
+   |                ^^^^^^^^^^^^^ method not found in `tauri::Window`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `raphael` (bin "raphael") due to 3 previous errors
