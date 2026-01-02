@@ -1,0 +1,25 @@
+    Checking raphael v0.1.0 (D:\projects\raphael\src-tauri)
+error[E0432]: unresolved import `tauri_plugin_global_shortcut::ShortcutExt`
+  --> src\main.rs:31:75
+   |
+31 |             use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutExt};
+   |                                                                           ^^^^^^^^^^^
+   |                                                                           |
+   |                                                                           no `ShortcutExt` in the root
+   |                                                                           help: a similar name exists in the module: `Shortcut`
+
+error[E0599]: no method named `global_shortcut` found for mutable reference `&mut tauri::App` in the current scope
+  --> src\main.rs:33:17
+   |
+33 |             app.global_shortcut().register(toggle_shortcut)?;
+   |                 ^^^^^^^^^^^^^^^ method not found in `&mut tauri::App`
+   |
+   = help: items from traits can only be used if the trait is in scope
+help: trait `GlobalShortcutExt` which provides `global_shortcut` is implemented but not in scope; perhaps you want to import it
+   |
+ 3 + use tauri_plugin_global_shortcut::GlobalShortcutExt;
+   |
+
+Some errors have detailed explanations: E0432, E0599.
+For more information about an error, try `rustc --explain E0432`.
+error: could not compile `raphael` (bin "raphael") due to 2 previous errors

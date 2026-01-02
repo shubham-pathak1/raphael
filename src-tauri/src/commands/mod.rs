@@ -24,9 +24,18 @@ pub fn get_extensions(handle: tauri::AppHandle) -> Result<Vec<ExtensionInfo>, St
     // For development, we look at the relative 'extensions' folder
     let mut ext_dir = handle.path().resource_dir().unwrap_or_else(|_| PathBuf::from("."));
     
-    // Handle the case where we are running in dev mode from the project root
+    // In dev mode, Resource Dir might be deep in target/debug
+    // We try to find the 'extensions' folder by walking up or checking common locations
     if !ext_dir.join("extensions").exists() {
-        ext_dir = PathBuf::from(".");
+        // Try current working directory
+        if let Ok(cwd) = std::env::current_dir() {
+            if cwd.join("extensions").exists() {
+                ext_dir = cwd;
+            } else if cwd.parent().map(|p| p.join("extensions").exists()).unwrap_or(false) {
+                // If we're in src-tauri, the parent has extensions
+                ext_dir = cwd.parent().unwrap().to_path_buf();
+            }
+        }
     }
     
     let ext_path = ext_dir.join("extensions");
