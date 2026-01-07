@@ -105,6 +105,23 @@ fn scan_start_menu() -> Vec<AppInfo> {
             scan_dir_for_apps(&path, &mut apps);
         }
     }
+    
+    // Also scan Program Files for executables
+    let program_files = vec![
+        PathBuf::from("C:\\Program Files"),
+        PathBuf::from("C:\\Program Files (x86)"),
+    ];
+    
+    for path in program_files {
+        if path.exists() {
+            scan_for_exe_files(&path, &mut apps);
+        }
+    }
+    
+    // Remove duplicates by name
+    apps.sort_by(|a, b| a.name.cmp(&b.name));
+    apps.dedup_by(|a, b| a.name == b.name);
+    
     apps
 }
 
@@ -122,13 +139,89 @@ fn scan_dir_for_apps(dir: &PathBuf, apps: &mut Vec<AppInfo>) {
                 scan_dir_for_apps(&path, apps);
             } else if path.extension().and_then(|s| s.to_str()) == Some("lnk") {
                 let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("Unknown").to_string();
+                let icon = extract_icon_from_lnk(&path);
                 apps.push(AppInfo {
                     name,
                     path: path.to_string_lossy().to_string(),
-                    icon: None,
+                    icon,
                 });
             }
         }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn extract_icon_from_lnk(lnk_path: &PathBuf) -> Option<String> {
+    use std::process::Command;
+    
+    // Use PowerShell to read shortcut properties
+    let ps_command = format!(
+        r#"$WshShell = New-Object -ComObject WScript.Shell; $shortcut = $WshShell.CreateShortcut('{}'); $shortcut.IconLocation"#,
+        lnk_path.to_string_lossy().replace('\\', "\\\\")
+    );
+    
+    if let Ok(output) = Command::new("powershell")
+        .args(&["-NoProfile", "-Command", &ps_command])
+        .output()
+    {
+        let icon_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if !icon_path.is_empty() && icon_path != "0" {
+            return Some(icon_path);
+        }
+    }
+    
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn scan_for_exe_files(dir: &PathBuf, apps: &mut Vec<AppInfo>) {
+    use walkdir::WalkDir;
+    
+    let walker = WalkDir::new(dir);
+    let mut found_count = 0;
+    for entry in walker.into_iter().filter_map(|e| e.ok()) {
+        if found_count > 500 { break; } // Limit the number of apps found
+        
+        let path = entry.path();
+        
+        // Only look at depth 2-3 to find main executables
+        let depth = entry.depth();
+        if depth < 2 || depth > 3 { continue; }
+        
+        if path.extension().and_then(|s| s.to_str()).map(|s| s.to_lowercase()) == Some("exe".to_string()) {
+            // Skip system executables and installers
+            let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+            if file_name.to_lowercase().contains("uninstall") || 
+               file_name.to_lowercase().contains("setup") ||
+               file_name.to_lowercase().starts_with("_") {
+                continue;
+            }
+            
+            let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("Unknown").to_string();
+            
+            // Skip if app with this name already exists
+            if !apps.iter().any(|a| a.name.to_lowercase() == name.to_lowercase()) {
+                let icon = extract_icon_from_exe(&path);
+                apps.push(AppInfo {
+                    name,
+                    path: path.to_string_lossy().to_string(),
+                    icon,
+                });
+                found_count += 1;
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn extract_icon_from_exe(exe_path: &std::path::Path) -> Option<String> {
+    // Return the exe path itself - Windows can render icons from exe files
+    // The frontend can use file:// protocol to load the icon
+    let path_str = exe_path.to_string_lossy().to_string();
+    if !path_str.is_empty() {
+        Some(format!("{}?icon", path_str))
+    } else {
+        None
     }
 }
 

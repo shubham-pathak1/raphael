@@ -3,16 +3,25 @@ import type { SearchResult } from "../../src/extension-loader/types";
 import { evaluate } from "mathjs";
 
 export async function search(query: string): Promise<SearchResult[]> {
-    const mathRegex = /^[\d\s+\-*/().^]+$/;
-    if (!mathRegex.test(query)) return [];
+    const trimmed = query.trim();
+    
+    // Allow any string with numbers and operators
+    const mathRegex = /^[\d\s+\-*/.()^%]+$/;
+    if (!mathRegex.test(trimmed)) return [];
 
-    // Very basic check to ensure it looks like a calculation
-    const hasOperator = /[+\-*/.^]/.test(query);
+    // Must have at least one operator
+    const hasOperator = /[+\-*/.^%]/.test(trimmed);
     if (!hasOperator) return [];
 
     try {
         // Use mathjs for accurate evaluation
-        const result = evaluate(query);
+        let result;
+        try {
+            result = evaluate(trimmed);
+        } catch (e) {
+            // If evaluation fails (incomplete expression), just return empty
+            return [];
+        }
         
         if (result === null || (typeof result === 'number' && (isNaN(result) || !isFinite(result)))) {
             return [];
