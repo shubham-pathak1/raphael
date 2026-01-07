@@ -4,7 +4,7 @@ mod commands;
 mod extensions;
 mod platform;
 
-use tauri::Manager;
+use tauri::{Manager, WindowEvent};
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -39,6 +39,16 @@ fn main() {
             if let Err(e) = app.global_shortcut().register(toggle_shortcut) {
                 eprintln!("Warning: Failed to register global shortcut (Alt+Space): {}", e);
             }
+            
+            if let Some(window) = app.get_webview_window("main") {
+                let window_clone = window.clone();
+                window.on_window_event(move |event| {
+                    if let WindowEvent::Focused(false) = event {
+                        let _ = window_clone.hide();
+                    }
+                });
+            }
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
